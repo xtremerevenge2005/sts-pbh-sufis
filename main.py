@@ -6,7 +6,7 @@ import requests
 # AWS Keys
 AWS_ACCESS_KEY_ID = "insert-access-key"
 AWS_SECRET_ACCESS_KEY = "insert-secret-access-key"
-AWS_REGION = "insert-dynamodb-tables-aws-region" 
+AWS_REGION = "insert-aws-dynamodb-region" 
 
 # DynamoDB Initialization
 dynamodb = boto3.resource(
@@ -90,7 +90,7 @@ def build_login_screen(title, id_text_field, password_text_field, switch_text, s
             ft.Text(title, size=24, weight="bold"),
             id_text_field,
             password_text_field,
-            ft.ElevatedButton("Login", on_click=login_callback),
+            ft.ElevatedButton("Entrar", on_click=login_callback),
             ft.TextButton(switch_text, on_click=switch_callback),
             ft.Text(value="", color="red", key="error_message")  
         ],
@@ -100,7 +100,7 @@ def build_login_screen(title, id_text_field, password_text_field, switch_text, s
     )
 
 def main(page: ft.Page):
-    page.title = "Multi-User Login"
+    page.title = "Sistema de Transporte de Servidores (STS-PBH-SUFIS)"
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.padding = ft.padding.Padding(left=10, top=50, right=10, bottom=10)
@@ -111,7 +111,7 @@ def main(page: ft.Page):
     driver_id = ft.TextField(label="ID", width=250)
     driver_password = ft.TextField(label="Senha", password=True, width=250)
 
-    logout_button = ft.ElevatedButton("Log Out", on_click=lambda e: show_employee_login(None))
+    logout_button = ft.ElevatedButton("Sair", on_click=lambda e: show_employee_login(None))
 
     def login_employee(e):
         user_data = check_credentials('GovernmentEmployees', int(gov_employee_id.value), gov_employee_password.value)
@@ -134,7 +134,7 @@ def main(page: ft.Page):
         page.vertical_alignment = "start"
         page.controls.append(
             build_login_screen(
-                "Government Employees", gov_employee_id, gov_employee_password, 
+                "Servidores", gov_employee_id, gov_employee_password, 
                 "Mudar para o login de motoristas", show_driver_login, login_employee
             )
         )
@@ -145,7 +145,7 @@ def main(page: ft.Page):
         page.vertical_alignment = "start"
         page.controls.append(
             build_login_screen(
-                "Drivers", driver_id, driver_password, 
+                "Motoristas", driver_id, driver_password, 
                 "Mudar para o login de servidores", show_employee_login, login_driver
             )
         )
@@ -158,7 +158,7 @@ def main(page: ft.Page):
         page.controls.append(
             ft.Row(
                 controls=[ft.Container(content=logout_button, alignment=ft.alignment.top_left),
-                          ft.Container(content=ft.ElevatedButton("Refresh", on_click=lambda e: show_drivers_list(employee_data)), alignment=ft.alignment.top_left)],  # Moved further left
+                          ft.Container(content=ft.ElevatedButton("Atualizar", on_click=lambda e: show_drivers_list(employee_data)), alignment=ft.alignment.top_left)],  # Moved further left
                 alignment=ft.MainAxisAlignment.START
             )
         )
@@ -187,10 +187,10 @@ def main(page: ft.Page):
             )
 
         share_location_button = ft.ElevatedButton(
-            "Compartilhar Localização",
+            "Compartilhar",
             on_click=lambda e: share_location(employee_data, location_field.value)
         )
-        location_field = ft.TextField(label="Compartilhar Localização (Google Maps)", width=300)
+        location_field = ft.TextField(label="Inserir Link (Google Maps)", width=300)
 
         map_button = ft.ElevatedButton("Abrir Mapa", on_click=lambda e: show_map_employee(employee_data))
 
@@ -200,8 +200,8 @@ def main(page: ft.Page):
             alignment = ft.MainAxisAlignment.CENTER
         )
 
-        driver_list_controls.append(geo)
         driver_list_controls.append(location_field)
+        driver_list_controls.append(geo)
         latest_location = ft.Text(f"Última localização: {employee_data['MapLocation']}")
         location_link = f"{employee_data['MapLocation']}"
         copy_location_button = ft.ElevatedButton("Copiar", on_click=lambda e: page.set_clipboard(location_link))
@@ -218,28 +218,76 @@ def main(page: ft.Page):
         page.controls.append(driver_list)
         page.update()
 
+    gps = ""
+
     def show_map_employee(employee_data):
+
+        nonlocal gps
+
         page.controls.clear()
         page.scroll = "None"
         page.controls.append(
             ft.Row(
                 controls=[ft.Container(content=logout_button, alignment=ft.alignment.top_left),
-                          ft.Container(content=ft.ElevatedButton("Lista", on_click=lambda e: show_drivers_list(employee_data)), alignment=ft.alignment.top_left),
+                          ft.Container(content=ft.ElevatedButton("Início", on_click=lambda e: show_drivers_list(employee_data)), alignment=ft.alignment.top_left),
                           ft.Container(content=ft.ElevatedButton("Atualizar", on_click=lambda e: show_map_employee(employee_data)), alignment=ft.alignment.top_left)],  # Moved further left
                 alignment=ft.MainAxisAlignment.START
             )
         )
-        insert_location = ft.TextField(label="Inserir Localização (Google Maps)", width=300)
+        insert_location = ft.TextField(label="Inserir Link (Google Maps)", width=300)
         page.controls.append(insert_location)
 
         default_location = "https://www.google.com/maps"
 
-        
+        gps_coordinates = ft.Text(f"Coordenadas: {gps}")
+        row = ft.Row(controls=[gps_coordinates])
+        page.controls.append(row)
+        generate_coordinates = ft.ElevatedButton("Gerar Coordenadas", on_click=lambda e: coordinates_generator(insert_location.value))
+        copy_coordinates = ft.ElevatedButton("Copiar", on_click=lambda e: page.set_clipboard(gps))
         submit_button = ft.ElevatedButton("Submeter", on_click=lambda e: submit(insert_location.value))
-        page.controls.append(submit_button)
+        row2 = ft.Row(controls=[submit_button,generate_coordinates,copy_coordinates], scroll="auto")
+        page.controls.append(row2)
         webview = ft.WebView(default_location, width=600, height=800)
         map = ft.Column(controls=[webview])
         page.controls.append(map)
+
+        def coordinates_generator(insert_location):
+
+            nonlocal gps
+            nonlocal row
+            nonlocal gps_coordinates
+            
+            if "search/" in insert_location:
+                    coordinates_part = insert_location.split("search/")[1]
+            else:
+                return None
+            
+            if "," in coordinates_part:
+                
+                latitude = coordinates_part.split(",")[0]
+                
+                longitude = coordinates_part.split(",")[1]
+                
+                longitude = longitude.split("?")[0]
+
+            if "-" in longitude:
+                    longitude = longitude.split("+")[1]
+
+            try:
+                
+                latitude = float(latitude)
+                longitude = float(longitude)
+                GPSLocation = f"{latitude}, {longitude}"
+                gps = GPSLocation
+                row.controls.remove(gps_coordinates)
+                gps_coordinates = ft.Text(f"Coordenadas: {gps}")
+                row.controls.append(gps_coordinates)
+                page.update()
+                return GPSLocation
+                
+            except ValueError:
+
+                return None
 
         def submit(insert_location):
             
@@ -269,8 +317,8 @@ def main(page: ft.Page):
                     default_location = "https://www.google.com/maps"
                     return default_location
         
-        page.update()
-
+        page.update()   
+        
     def show_driver_details(driver_id, employee_data):
         driver = get_driver_data(driver_id)
         page.controls.clear()
@@ -279,14 +327,14 @@ def main(page: ft.Page):
         page.controls.append(
             ft.Row(
                 controls=[ft.Container(content=logout_button, alignment=ft.alignment.top_left),
-                          ft.Container(content=ft.ElevatedButton("Lista", on_click=lambda e: show_drivers_list(employee_data)), alignment=ft.alignment.top_left),
+                          ft.Container(content=ft.ElevatedButton("Início", on_click=lambda e: show_drivers_list(employee_data)), alignment=ft.alignment.top_left),
                           ft.Container(content=ft.ElevatedButton("Atualizar", on_click=lambda e: show_driver_details(driver_id, employee_data)), alignment=ft.alignment.top_left)],  # Moved further left
                 alignment=ft.MainAxisAlignment.START
             )
         )
 
         employee_name = employee_data['Name']
-        send_request_text = "Solicitar Motorista"
+        send_request_text = "Enviar Solicitação de Motorista"
         send_request_enabled = True
 
         if employee_name in driver.get('Passengers', []):
@@ -305,7 +353,7 @@ def main(page: ft.Page):
 
         location_link = driver.get("MapLocation", "https://www.google.com/maps")
         copy_location_button = ft.ElevatedButton("Copiar", on_click=lambda e: page.set_clipboard(location_link))
-        contact = driver.get("Contact","Sem informação")
+        contact = driver.get("Contact","Nenhuma informação")
         copy_contact_button = ft.ElevatedButton("Copiar", on_click=lambda e: page.set_clipboard(contact))
 
 
@@ -314,7 +362,7 @@ def main(page: ft.Page):
         details = ft.Column(
             controls=[
                 ft.Text(f"Motorista:", size=20),
-                ft.Text(f"{driver['Name']}"),
+                ft.Text(f"Nome: {driver['Name']}"),
                 ft.Text(f"Status: {driver['Status']}"),
                 ft.Text(f"Contato: {driver['Contact']}"),
                 copy_contact_button,
@@ -351,7 +399,7 @@ def main(page: ft.Page):
 
         map_button = ft.ElevatedButton("Abrir Mapa", on_click=lambda e: show_map(driver_data))
 
-        location_field = ft.TextField(label="Compartilhar Localização (Google Maps)", width=300)
+        location_field = ft.TextField(label="Inserir Link (Google Maps)", width=300)
 
         share_location_button = ft.ElevatedButton(
             "Compartilhar",
@@ -385,10 +433,11 @@ def main(page: ft.Page):
 
         status_buttons = ft.Row(
             controls=[
-                ft.ElevatedButton("Mudar para Disponível", on_click=lambda e: update_driver_status(driver_data, "Idle")),
-                ft.ElevatedButton("Mudar para Dirigindo", on_click=lambda e: update_driver_status(driver_data, "Driving")),
-                ft.ElevatedButton("Mudar para Ausente", on_click=lambda e: update_driver_status(driver_data, "Absent"))
-            ]
+                ft.ElevatedButton("Mudar para Disponível", on_click=lambda e: update_driver_status(driver_data, "Disponível")),
+                ft.ElevatedButton("Mudar para Dirigindo", on_click=lambda e: update_driver_status(driver_data, "Dirigindo")),
+                ft.ElevatedButton("Mudar para Ausente", on_click=lambda e: update_driver_status(driver_data, "Ausente"))
+            ],
+            scroll="auto"
         )
 
         location_link = f"{driver_data['MapLocation']}"
@@ -402,10 +451,11 @@ def main(page: ft.Page):
                 status_buttons,
                 ft.Text(f"Última localização: {driver_data['MapLocation']}"),
                 copy_location_button,
-                share_location_button,
                 location_field,
+                ft.Row(controls=[
+                share_location_button,
+                map_button]),
                 employee_list_button,
-                map_button,
                 ft.Column(controls=requests_controls, alignment=ft.MainAxisAlignment.CENTER, scroll = "auto"),
                 ft.Text(f"Passageiros:", size=20),
                 ft.Text(f"{', '.join(driver_data.get('Passengers', []))}"),
@@ -418,7 +468,12 @@ def main(page: ft.Page):
 
     # Define additional necessary functions...
 
+    gps2 = ""
+
     def show_map(driver_data):
+
+        nonlocal gps2
+
         page.controls.clear()
         page.scroll = "None"
         page.controls.append(
@@ -430,16 +485,60 @@ def main(page: ft.Page):
             )
         )
 
-        insert_location_2 = ft.TextField(label="Inserir Localização (Google Maps)", width=300)
+        insert_location_2 = ft.TextField(label="Inserir Link (Google Maps)", width=300)
         page.controls.append(insert_location_2)
         
         default_location_2 = "https://www.google.com/maps"
 
+        gps_coordinates = ft.Text(f"Coordenadas: {gps2}")
+        row = ft.Row(controls=[gps_coordinates])
+        page.controls.append(row)
+        generate_coordinates = ft.ElevatedButton("Gerar Coordenadas", on_click=lambda e: coordinates_generator(insert_location_2.value))
+        copy_coordinates = ft.ElevatedButton("Copiar", on_click=lambda e: page.set_clipboard(gps2))
         submit_button_2 = ft.ElevatedButton("Submeter", on_click=lambda e: submit_2(insert_location_2.value))
-        page.controls.append(submit_button_2)
+        row2 = ft.Row(controls=[submit_button_2,generate_coordinates,copy_coordinates],scroll="auto")
+        page.controls.append(row2)
         webview_2 = ft.WebView(default_location_2, width=600, height=800)
         map_2 = ft.Column(controls=[webview_2])
         page.controls.append(map_2)
+
+        def coordinates_generator(insert_location):
+
+            nonlocal gps2
+            nonlocal row
+            nonlocal gps_coordinates
+            
+            if "search/" in insert_location:
+                    coordinates_part = insert_location.split("search/")[1]
+            else:
+                return None
+            
+            if "," in coordinates_part:
+                
+                latitude = coordinates_part.split(",")[0]
+                
+                longitude = coordinates_part.split(",")[1]
+                
+                longitude = longitude.split("?")[0]
+
+            if "-" in longitude:
+                    longitude = longitude.split("+")[1]
+
+            try:
+                
+                latitude = float(latitude)
+                longitude = float(longitude)
+                GPSLocation = f"{latitude}, {longitude}"
+                gps2 = GPSLocation
+                row.controls.remove(gps_coordinates)
+                gps_coordinates = ft.Text(f"Coordenadas: {gps2}")
+                row.controls.append(gps_coordinates)
+                page.update()
+                return GPSLocation
+                
+            except ValueError:
+
+                return None
 
         def submit_2(insert_location_2):
             
@@ -478,7 +577,8 @@ def main(page: ft.Page):
         employee_list_controls = [
             ft.Row(
             controls=[ft.Container(content=logout_button, alignment=ft.alignment.top_left),
-                      ft.Container(content=ft.ElevatedButton("Início", on_click=lambda e: show_driver_dashboard(driver_data)))],
+                      ft.Container(content=ft.ElevatedButton("Início", on_click=lambda e: show_driver_dashboard(driver_data))),
+                      ft.Container(content=ft.ElevatedButton("Atualizar"), on_click=lambda e: show_employee_list(driver_data))],
             alignment=ft.MainAxisAlignment.START),
             ft.Text("Servidores", size=24, weight="bold")
             ]
@@ -519,7 +619,7 @@ def main(page: ft.Page):
 
         location_link = employee.get("MapLocation", "https://www.google.com/maps")
         copy_location_button = ft.ElevatedButton("Copiar", on_click=lambda e: page.set_clipboard(location_link))
-        contact = employee.get("Contato","Sem Informação")
+        contact = employee.get("Contato","Nenhuma Informação")
         copy_contact_button = ft.ElevatedButton("Copiar", on_click=lambda e: page.set_clipboard(contact))
 
         webview = ft.WebView(location_link, width=600, height=500)
@@ -527,7 +627,7 @@ def main(page: ft.Page):
         details = ft.Column(
             controls=[
                 ft.Text(f"Servidor:", size=20),
-                ft.Text(f"{employee['Name']}", size=15),
+                ft.Text(f"Nome: {employee['Name']}"),
                 ft.Text(f"Cargo: {employee['Role']}"),
                 ft.Text(f"Contato: {employee['Contact']}"),
                 copy_contact_button,
