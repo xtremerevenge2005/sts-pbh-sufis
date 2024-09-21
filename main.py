@@ -158,7 +158,7 @@ def main(page: ft.Page):
         page.controls.append(
             ft.Row(
                 controls=[ft.Container(content=logout_button, alignment=ft.alignment.top_left),
-                          ft.Container(content=ft.ElevatedButton("Atualizar", on_click=lambda e: show_drivers_list(employee_data)), alignment=ft.alignment.top_left)],  # Moved further left
+                          ft.Container(content=ft.ElevatedButton("Atualizar", on_click=lambda e: show_drivers_list(employee_data)), alignment=ft.alignment.top_left)],  
                 alignment=ft.MainAxisAlignment.START
             )
         )
@@ -170,7 +170,7 @@ def main(page: ft.Page):
             drivers = response['Items']
             for driver in drivers:
                 if employee_data['Name'] in driver.get('RideRequests', []) or employee_data['Name'] in driver.get('Passengers', []):
-                    continue  # Skip this driver to prevent redundant requests
+                    continue  
                 
                 button = ft.TextButton(
                     f"{driver['Name']} - Status: {driver['Status']}",
@@ -230,7 +230,7 @@ def main(page: ft.Page):
             ft.Row(
                 controls=[ft.Container(content=logout_button, alignment=ft.alignment.top_left),
                           ft.Container(content=ft.ElevatedButton("Início", on_click=lambda e: show_drivers_list(employee_data)), alignment=ft.alignment.top_left),
-                          ft.Container(content=ft.ElevatedButton("Atualizar", on_click=lambda e: show_map_employee(employee_data)), alignment=ft.alignment.top_left)],  # Moved further left
+                          ft.Container(content=ft.ElevatedButton("Atualizar", on_click=lambda e: show_map_employee(employee_data)), alignment=ft.alignment.top_left)], 
                 alignment=ft.MainAxisAlignment.START
             )
         )
@@ -328,7 +328,7 @@ def main(page: ft.Page):
             ft.Row(
                 controls=[ft.Container(content=logout_button, alignment=ft.alignment.top_left),
                           ft.Container(content=ft.ElevatedButton("Início", on_click=lambda e: show_drivers_list(employee_data)), alignment=ft.alignment.top_left),
-                          ft.Container(content=ft.ElevatedButton("Atualizar", on_click=lambda e: show_driver_details(driver_id, employee_data)), alignment=ft.alignment.top_left)],  # Moved further left
+                          ft.Container(content=ft.ElevatedButton("Atualizar", on_click=lambda e: show_driver_details(driver_id, employee_data)), alignment=ft.alignment.top_left)],  
                 alignment=ft.MainAxisAlignment.START
             )
         )
@@ -387,7 +387,7 @@ def main(page: ft.Page):
         page.controls.append(
             ft.Row(
                 controls=[ft.Container(content=logout_button, alignment=ft.alignment.top_left),
-                          ft.Container(content=ft.ElevatedButton("Atualizar", on_click=lambda e: refresh_driver_dashboard(driver_data)), alignment=ft.alignment.top_left)],  # Moved further left
+                          ft.Container(content=ft.ElevatedButton("Atualizar", on_click=lambda e: refresh_driver_dashboard(driver_data)), alignment=ft.alignment.top_left)],  
                 alignment=ft.MainAxisAlignment.START
             )
         )
@@ -466,8 +466,6 @@ def main(page: ft.Page):
         page.controls.append(dashboard)
         page.update()
 
-    # Define additional necessary functions...
-
     gps2 = ""
 
     def show_map(driver_data):
@@ -480,7 +478,7 @@ def main(page: ft.Page):
             ft.Row(
                 controls=[ft.Container(content=logout_button, alignment=ft.alignment.top_left),
                           ft.Container(content=ft.ElevatedButton("Início", on_click=lambda e: show_driver_dashboard(driver_data)), alignment=ft.alignment.top_left),
-                          ft.Container(content=ft.ElevatedButton("Atualizar", on_click=lambda e: show_map(driver_data)), alignment=ft.alignment.top_left)],  # Moved further left
+                          ft.Container(content=ft.ElevatedButton("Atualizar", on_click=lambda e: show_map(driver_data)), alignment=ft.alignment.top_left)],  
                 alignment=ft.MainAxisAlignment.START
             )
         )
@@ -612,7 +610,7 @@ def main(page: ft.Page):
             ft.Row(
                 controls=[ft.Container(content=logout_button, alignment=ft.alignment.top_left),
                           ft.Container(content=ft.ElevatedButton("Servidores", on_click=lambda e: show_employee_list(driver_data)), alignment=ft.alignment.top_left),
-                          ft.Container(content=ft.ElevatedButton("Atualizar", on_click=lambda e: show_employee_details(employee_id,driver_data)), alignment=ft.alignment.top_left)],  # Moved further left
+                          ft.Container(content=ft.ElevatedButton("Atualizar", on_click=lambda e: show_employee_details(employee_id,driver_data)), alignment=ft.alignment.top_left)], 
                 alignment=ft.MainAxisAlignment.START
             )
         )
